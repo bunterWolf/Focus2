@@ -1,3 +1,26 @@
+/**
+ * ActivityTracker.ts
+ * 
+ * Diese Datei definiert den ActivityTracker, der für die Überwachung und Steuerung
+ * des Aktivitätstrackings verantwortlich ist. Er ist ein zentraler Bestandteil der
+ * modularisierten Architektur, die im Rahmen des Refactorings eingeführt wurde.
+ * 
+ * Hauptfunktionen:
+ * - Starten und Pausieren des Aktivitätstrackings
+ * - Verarbeitung und Speicherung eingehender Heartbeats
+ * - Auslösen regelmäßiger Datenaktualisierungs- und Aggregationsintervalle
+ * - Benachrichtigung anderer Komponenten über Statusänderungen
+ * 
+ * Der ActivityTracker arbeitet eng mit:
+ * - DateManager: Für die Erkennung von Tageswechseln
+ * - ActivityStorage: Für die Speicherung von Heartbeats
+ * - AggregationService: Für die regelmäßige Datenanalyse
+ * - IntervalScheduler: Für die zeitgesteuerte Ausführung von Aktionen
+ * 
+ * Diese Komponente implementiert das Observer-Pattern durch Callbacks, um andere
+ * Teile der Anwendung über Änderungen des Tracking-Status zu informieren.
+ */
+
 import { DateManager } from '../utils/DateManager';
 import { ActivityStorage } from '../storage/ActivityStorage';
 import { AggregationService } from '../analysis/AggregationService';

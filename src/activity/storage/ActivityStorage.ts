@@ -1,3 +1,26 @@
+/**
+ * ActivityStorage.ts
+ * 
+ * Diese Datei definiert die Storage-Komponente, die für die Persistenz und Verwaltung 
+ * von Aktivitätsdaten verantwortlich ist. Sie ist Teil der modularisierten Architektur,
+ * die im Rahmen des Refactorings eingeführt wurde.
+ * 
+ * Hauptfunktionen:
+ * - Speichern und Laden von Heartbeat-Daten
+ * - Verwaltung des Speicherortes und der Dateioperationen
+ * - Bereinigung alter Daten gemäß Aufbewahrungsrichtlinien
+ * - Verarbeitung von "may_be_inactive"-Zuständen bei erkannter Inaktivität
+ * 
+ * Die Klasse arbeitet eng mit:
+ * - StorageAdapter: Für die eigentliche Datei-I/O
+ * - ActivityState: Für die In-Memory-Darstellung der Aktivitätsdaten
+ * - DateManager: Für die Zeitrechnung und Datumsformatierung
+ * - SettingsManager: Für die Konfiguration des Speicherortes
+ * 
+ * Diese Komponente implementiert das Repository-Pattern, wobei ActivityState
+ * als In-Memory-Repository und StorageAdapter als Persistenzschicht dient.
+ */
+
 import * as path from 'path';
 import * as fs from 'fs';
 import { app } from 'electron';

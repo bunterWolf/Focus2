@@ -1,4 +1,21 @@
 /**
+ * DateManager.ts
+ * 
+ * Diese Datei definiert den DateManager, der alle zeitbezogenen Funktionen 
+ * in der Anwendung kapselt. Er ist Teil der modularisierten Architektur,
+ * die zur Verbesserung der Code-Qualität und Wartbarkeit eingeführt wurde.
+ * 
+ * Hauptfunktionen:
+ * - Generierung konsistenter Datums-Keys für die Datengruppierung
+ * - Überwachung von Tageswechseln und Benachrichtigung anderer Komponenten
+ * - Konvertierung zwischen Zeitstempeln und Datums-Keys
+ * 
+ * Diese Komponente hilft, zeitbezogene Logik zu zentralisieren und 
+ * stellt sicher, dass die Umgang mit Zeitzonen und Tageswechseln 
+ * in der gesamten Anwendung konsistent erfolgt.
+ */
+
+/**
  * Callback-Typ für den Tageswechsel
  */
 export type DayChangeHandler = (oldDateKey: string, newDateKey: string) => void;

@@ -1,3 +1,22 @@
+/**
+ * ActivityFacade.ts
+ * 
+ * Diese Datei definiert die zentrale Facade-Klasse der Anwendung, die als primärer
+ * Zugangspunkt für alle aktivitätsbezogenen Operationen dient. Sie wurde im Rahmen
+ * einer umfassenden Refaktorierung eingeführt, um den monolithischen ActivityStore
+ * durch ein modulareres Design zu ersetzen.
+ * 
+ * Die Facade kapselt:
+ * - DateManager: Für zeitbezogene Operationen und Tageswechsel
+ * - ActivityStorage: Für die Persistierung von Aktivitätsdaten
+ * - AggregationService: Für die Analyse und Aggregation von Aktivitätsdaten
+ * - ActivityTracker: Für das Tracking von Benutzeraktivitäten
+ * - SettingsManager: Für die Verwaltung von Anwendungseinstellungen
+ * 
+ * Durch dieses Design wird das Single Responsibility Principle umgesetzt, während
+ * die Facade eine einfache, konsistente Schnittstelle für externe Komponenten bietet.
+ */
+
 import { ActivityStorage } from '../storage/ActivityStorage';
 import { DateManager, DayChangeHandler } from '../utils/DateManager';
 import { AggregationService } from '../analysis/AggregationService';

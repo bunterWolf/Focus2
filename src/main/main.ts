@@ -1,6 +1,20 @@
 // Remove ts-node/register as this file will be compiled
 // require('ts-node/register');
 
+/**
+ * Hauptdatei der Electron-Anwendung
+ * 
+ * Diese Datei ist der Einstiegspunkt der Anwendung und verantwortlich für:
+ * - Initialisierung des Hauptfensters
+ * - Einrichtung der Aktivitätsverfolgungskomponenten (ActivityFacade, HeartbeatManager)
+ * - Registrierung aller IPC-Handler für die Kommunikation zwischen Haupt- und Renderer-Prozess
+ * - Verwaltung des Anwendungslebenszyklus (Start, Beenden, Bereinigung)
+ * - Konfiguration des Auto-Updaters und Auto-Launch-Verhaltens
+ * 
+ * Die Architektur folgt dem Facade-Muster, wobei ActivityFacade als zentrale 
+ * Schnittstelle für alle aktivitätsbezogenen Operationen dient.
+ */
+
 import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, dialog } from 'electron';
 import * as path from 'path';
 import * as url from 'url';

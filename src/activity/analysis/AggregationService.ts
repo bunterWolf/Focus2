@@ -1,3 +1,21 @@
+/**
+ * AggregationService.ts
+ * 
+ * Diese Datei definiert den AggregationService, der für die Datenanalyse und -aggregation
+ * in der Anwendung zuständig ist. Er ist Teil der modularisierten Architektur und 
+ * implementiert die Logik für die Umwandlung von Rohdaten in aussagekräftige Informationen.
+ * 
+ * Hauptfunktionen:
+ * - Generierung von Zeitleisten aus Heartbeat-Daten
+ * - Berechnung von Zusammenfassungen (Aktivitätszeiten, App-Nutzung)
+ * - Caching von aggregierten Daten zur Leistungsoptimierung
+ * - Verwaltung des Aggregationsintervalls (5, 10, 15 Minuten)
+ * 
+ * Diese Komponente arbeitet eng mit dem TimelineGenerator zusammen, der die 
+ * eigentlichen Aggregationsalgorithmen implementiert, während der AggregationService
+ * die Orchestrierung und das Caching übernimmt.
+ */
+
 import TimelineGenerator, { AggregationIntervalMinutes } from './TimelineGenerator';
 import { ActivityStorage } from '../storage/ActivityStorage';
 import { DayData, AggregatedData } from '../core/Types';

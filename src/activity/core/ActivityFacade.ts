@@ -1,10 +1,10 @@
-import { ActivityStorage } from './ActivityStorage';
-import { DateManager, DayChangeHandler } from './DateManager';
-import { AggregationService } from './AggregationService';
-import { ActivityTracker } from './ActivityTracker';
-import { SettingsManager } from './SettingsManager';
-import { HeartbeatData, DayData } from './ActivityStore';
-import { AggregationIntervalMinutes } from './TimelineGenerator';
+import { ActivityStorage } from '../storage/ActivityStorage';
+import { DateManager, DayChangeHandler } from '../utils/DateManager';
+import { AggregationService } from '../analysis/AggregationService';
+import { ActivityTracker } from '../capture/ActivityTracker';
+import { SettingsManager } from '../../core/settings/SettingsManager';
+import { HeartbeatData, DayData } from './Types';
+import { AggregationIntervalMinutes } from '../analysis/TimelineGenerator';
 
 /**
  * Zentrale Fassade für alle aktivitätsbezogenen Operationen.

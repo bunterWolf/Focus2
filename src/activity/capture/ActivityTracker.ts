@@ -1,9 +1,9 @@
-import { DateManager } from './DateManager';
-import { ActivityStorage } from './ActivityStorage';
-import { AggregationService } from './AggregationService';
-import { HeartbeatData } from './ActivityStore';
-import { AggregationIntervalMinutes } from './TimelineGenerator';
-import { IntervalScheduler } from './IntervalScheduler';
+import { DateManager } from '../utils/DateManager';
+import { ActivityStorage } from '../storage/ActivityStorage';
+import { AggregationService } from '../analysis/AggregationService';
+import { HeartbeatData } from '../core/Types';
+import { AggregationIntervalMinutes } from '../analysis/TimelineGenerator';
+import { IntervalScheduler } from '../utils/IntervalScheduler';
 
 // Export callback types
 export type DataUpdateCallback = (dateKey: string) => void;

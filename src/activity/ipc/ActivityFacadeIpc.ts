@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { ActivityFacade } from './ActivityFacade';
+import { ActivityFacade } from '../core/ActivityFacade';
 
 /**
  * Verwaltet IPC-Kommunikation für ActivityFacade

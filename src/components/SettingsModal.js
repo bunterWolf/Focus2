@@ -132,7 +132,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const handleToggleAutoLaunch = async (e) => {
     const checked = e.target.checked;
     try {
-      const result = await ipcRenderer.invoke('update-auto-launch-settings', checked);
+      const result = await ipcRenderer.invoke('update-auto-launch-setting', checked);
       if (result.success) {
         setAutoLaunchEnabled(checked);
       } else {

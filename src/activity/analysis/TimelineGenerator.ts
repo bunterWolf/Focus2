@@ -7,9 +7,8 @@
  * - Activities are merged when consecutive with same type/content
  */
 
-// Importiere benötigte Typen aus ActivityStore
-// Stellen Sie sicher, dass diese Typen in ActivityStore.ts exportiert werden.
-import { Heartbeat, TimelineEvent, AggregationSummary, HeartbeatData } from './ActivityStore';
+// Importiere benötigte Typen aus Types
+import { Heartbeat, TimelineEvent, AggregationSummary, HeartbeatData } from '../core/Types';
 
 // Definiere den Typ für das Aggregationsintervall
 // EXPORT this type so it can be imported by ActivityStore

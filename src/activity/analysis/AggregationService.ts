@@ -1,6 +1,6 @@
 import TimelineGenerator, { AggregationIntervalMinutes } from './TimelineGenerator';
-import { ActivityStorage } from './ActivityStorage';
-import { DayData, AggregatedData } from './ActivityStore';
+import { ActivityStorage } from '../storage/ActivityStorage';
+import { DayData, AggregatedData } from '../core/Types';
 
 /**
  * Verwaltet die Aggregation von Aktivitätsdaten.
@@ -121,25 +121,37 @@ export class AggregationService {
     // Wenn kein Datums-Key angegeben ist, verwende den aktuellen Tag
     const effectiveDateKey = dateKey || this.getCurrentDateKey();
     
+    console.log(`[AggregationService] getDayDataWithAggregation called for ${effectiveDateKey}`);
+    
     // Lade Basisdaten
     const dayData = this.activityStorage.getDayData(effectiveDateKey);
     if (!dayData) {
       return null;
     }
     
+    console.log(`[AggregationService] Found ${dayData.heartbeats.length} heartbeats for ${effectiveDateKey}`);
+    
     // Füge aggregierte Daten hinzu, wenn vorhanden
+    console.log(`[AggregationService] getAggregatedData called for ${effectiveDateKey}`);
     const aggregated = this.getAggregatedData(effectiveDateKey);
     if (aggregated) {
+      console.log(`[AggregationService] Cache hit for ${effectiveDateKey}`);
+      console.log(`[AggregationService] Timeline events in cache: ${aggregated.timelineOverview.length}`);
+      console.log(`[AggregationService] Adding aggregated data with ${aggregated.timelineOverview.length} timeline events`);
       dayData.aggregated = aggregated;
-    }
-    
-    // Forciere die Aggregation, falls noch keine Daten vorhanden sind
-    if (!dayData.aggregated && dayData.heartbeats.length > 0) {
-      this.aggregateDay(effectiveDateKey);
-      const forcedAggregated = this.aggregationCache.get(effectiveDateKey);
-      if (forcedAggregated) {
-        dayData.aggregated = forcedAggregated;
-      }
+    } else {
+      console.log(`[AggregationService] No aggregated data available for ${effectiveDateKey}`);
+      // Erstelle eine leere Aggregation für Tage ohne Daten, um UI-Fehler zu vermeiden
+      dayData.aggregated = {
+        summary: {
+          activeTrackingDuration: 0,
+          totalActiveDuration: 0,
+          totalInactiveDuration: 0,
+          totalMeetingDuration: 0,
+          appUsage: {}
+        },
+        timelineOverview: []
+      };
     }
     
     return dayData;

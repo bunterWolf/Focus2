@@ -15,6 +15,15 @@ Workmory is an Electron-based desktop application designed to track and analyze 
 - **Cross-Platform**: Works on Windows and macOS
 - **Automatic Updates**: Seamlessly receive and install new versions
 
+## Documentation
+
+For detailed documentation, please refer to:
+
+- [Documentation Index](./docs/index.md) - Overview of all documentation
+- [User Requirements](./docs/user-requirements.md) - Core features and requirements
+- [Engineering Design](./docs/engineering-design.md) - Technical architecture and implementation details
+- [Release Process](./docs/release-process.md) - How releases are managed
+
 ## Supported Platforms
 
 - **Windows**: Installer (.exe)

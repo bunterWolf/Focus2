@@ -1,6 +1,20 @@
 // Remove ts-node/register as this file will be compiled
 // require('ts-node/register');
 
+/**
+ * Hauptdatei der Electron-Anwendung
+ * 
+ * Diese Datei ist der Einstiegspunkt der Anwendung und verantwortlich für:
+ * - Initialisierung des Hauptfensters
+ * - Einrichtung der Aktivitätsverfolgungskomponenten (ActivityFacade, HeartbeatManager)
+ * - Registrierung aller IPC-Handler für die Kommunikation zwischen Haupt- und Renderer-Prozess
+ * - Verwaltung des Anwendungslebenszyklus (Start, Beenden, Bereinigung)
+ * - Konfiguration des Auto-Updaters und Auto-Launch-Verhaltens
+ * 
+ * Die Architektur folgt dem Facade-Muster, wobei ActivityFacade als zentrale 
+ * Schnittstelle für alle aktivitätsbezogenen Operationen dient.
+ */
+
 import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, dialog } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
@@ -12,10 +26,10 @@ import AutoLaunch from 'auto-launch'; // Auto-Launch-Import
 // Read app version from package.json
 import { version as appVersion } from '../../package.json';
 
-// Use default imports for our TypeScript modules
-import HeartbeatManager from '../store/HeartbeatManager';
-import { ActivityFacade } from '../store/ActivityFacade';
-import { ActivityFacadeIpc } from '../store/ActivityFacadeIpc';
+// Use default imports for our TypeScript modules with updated paths
+import HeartbeatManager from '../activity/capture/HeartbeatManager';
+import { ActivityFacade } from '../activity/core/ActivityFacade';
+import { ActivityFacadeIpc } from '../activity/ipc/ActivityFacadeIpc';
 
 // Auto-Launcher-Instanz
 let autoLauncher: AutoLaunch;
@@ -259,6 +273,73 @@ function registerIpcHandlers(): void { // Add return type void
     return appVersion;
   });
 
+  // ====== ÜBERGANGSSCHICHT FÜR IPC-KANÄLE ======
+  // Diese Handler leiten die alten IPC-Aufrufe an die neuen ActivityFacadeIpc-Handler weiter
+  
+  // Alte get-day-data -> Neue activity:getDayData
+  ipcMain.handle('get-day-data', (event: IpcMainInvokeEvent, date: string | null): any => {
+    console.log(`[IPC Bridge] Forwarding get-day-data to activity:getDayData for date: ${date || 'today'}`);
+    if (!activityFacade) {
+      console.error('[IPC Bridge] Cannot forward: activity facade not initialized');
+      return null;
+    }
+    return activityFacade.getDayData(date);
+  });
+  
+  // Alte get-available-dates -> Neue activity:getAvailableDates
+  ipcMain.handle('get-available-dates', (): string[] => {
+    console.log('[IPC Bridge] Forwarding get-available-dates to activity:getAvailableDates');
+    if (!activityFacade) {
+      console.error('[IPC Bridge] Cannot forward: activity facade not initialized');
+      return [];
+    }
+    return activityFacade.getAvailableDates();
+  });
+  
+  // Alte get-aggregation-interval -> Neue activity:getAggregationInterval
+  ipcMain.handle('get-aggregation-interval', (): number => {
+    console.log('[IPC Bridge] Forwarding get-aggregation-interval to activity:getAggregationInterval');
+    if (!activityFacade) {
+      console.error('[IPC Bridge] Cannot forward: activity facade not initialized');
+      return 15; // Default interval
+    }
+    return activityFacade.getAggregationInterval();
+  });
+  
+  // Alte set-aggregation-interval -> Neue activity:setAggregationInterval
+  ipcMain.handle('set-aggregation-interval', (event: IpcMainInvokeEvent, interval: number): void => {
+    console.log(`[IPC Bridge] Forwarding set-aggregation-interval to activity:setAggregationInterval: ${interval}`);
+    if (!activityFacade) {
+      console.error('[IPC Bridge] Cannot forward: activity facade not initialized');
+      return;
+    }
+    if ([5, 10, 15].includes(interval)) {
+      activityFacade.setAggregationInterval(interval as 5 | 10 | 15);
+    }
+  });
+  
+  // Setze Callbacks für ActivityFacade um Änderungen über beide Kanal-Typen zu kommunizieren
+  if (activityFacade) {
+    activityFacade.setCallbacks(
+      // Callback für Datenänderungen - sendet sowohl alte als auch neue Events
+      (dateKey: string) => {
+        console.log(`[IPC Bridge] Data updated for ${dateKey}, sending both old and new events`);
+        // Beide Event-Typen senden
+        notifyAllWindows('activity-data-updated', dateKey);  // Alter Event-Typ
+        notifyAllWindows('activity:dataUpdated', dateKey);   // Neuer Event-Typ
+      },
+      // Callback für Tracking-Status-Änderungen - sendet sowohl alte als auch neue Events
+      (isTracking: boolean) => {
+        console.log(`[IPC Bridge] Tracking status changed to ${isTracking}, sending both old and new events`);
+        // Beide Event-Typen senden
+        notifyAllWindows('tracking-status-changed', isTracking);  // Alter Event-Typ
+        notifyAllWindows('activity:trackingStatusChanged', isTracking);  // Neuer Event-Typ
+      }
+    );
+  }
+  
+  // ====== ENDE DER ÜBERGANGSSCHICHT ======
+
   // Settings-bezogene Handler
   
   // Get current settings
@@ -351,6 +432,24 @@ function registerIpcHandlers(): void { // Add return type void
     } catch (error: any) {
       console.error('Error updating auto launch setting:', error);
       return { success: false, error: error.message };
+    }
+  });
+
+  // Get auto launch settings
+  ipcMain.handle('get-auto-launch-settings', async (event: IpcMainInvokeEvent): Promise<any> => {
+    if (!activityFacade) {
+      console.error('Cannot get auto launch settings: activity facade not initialized.');
+      return { enabled: false, error: 'Activity facade not initialized' };
+    }
+    
+    try {
+      const settingsManager = activityFacade.getSettingsManager();
+      const isEnabled = settingsManager.getAutoLaunchEnabled();
+      
+      return { enabled: isEnabled };
+    } catch (error: any) {
+      console.error('Error getting auto launch settings:', error);
+      return { enabled: false, error: error.message };
     }
   });
 
@@ -511,14 +610,25 @@ const cleanup = () => {
 
     // Unregister IPC handlers
     console.log("Unregistering IPC handlers...");
+    // Neue IPC-Handlers (wird von ActivityFacadeIpc verwaltet)
+    
+    // Übergangsschicht
+    ipcMain.removeHandler('get-day-data');
+    ipcMain.removeHandler('get-available-dates');
+    ipcMain.removeHandler('get-aggregation-interval');
+    ipcMain.removeHandler('set-aggregation-interval');
+    
+    // Direkte Handlers in main.ts
     ipcMain.removeHandler('get-tracking-status');
     ipcMain.removeHandler('toggle-tracking');
     ipcMain.removeHandler('is-using-mock-data');
+    ipcMain.removeHandler('get-app-version');
     ipcMain.removeHandler('get-settings');
     ipcMain.removeHandler('update-activity-store-path');
     ipcMain.removeHandler('confirm-use-existing-activity-store');
     ipcMain.removeHandler('update-beta-release-setting');
     ipcMain.removeHandler('update-auto-launch-setting');
+    ipcMain.removeHandler('get-auto-launch-settings');
 
     console.log('All resources cleaned up before quitting.');
   } catch (err) {

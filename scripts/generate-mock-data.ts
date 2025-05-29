@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { StoreData, DayData, Heartbeat, HeartbeatData, AppWindowData } from '../src/store/ActivityStore'; // Import types from ActivityStore
-import { AggregationIntervalMinutes } from '../src/store/TimelineGenerator'; // Import type from TimelineGenerator
+import { StoreData, DayData, Heartbeat, HeartbeatData, AppWindowData } from '../src/activity/core/Types';
+import { AggregationIntervalMinutes } from '../src/activity/analysis/TimelineGenerator';
 
 // --- Configuration ---
 const OUTPUT_PATH = path.resolve(__dirname, '../public/mock-data.json');
@@ -28,7 +28,7 @@ function generateHeartbeatSequence(
     startTimeStr: string,
     endTimeStr: string,
     activity: 'active' | 'inactive', // Explicit activity status
-    appData: AppWindowData | null,    // App data (can be null)
+    appData: AppWindowData | undefined,    // App data (can be undefined)
     dateStr: string = BASE_DATE_STR
 ): Heartbeat[] {
     const startMs = getTime(startTimeStr, dateStr);
@@ -40,7 +40,7 @@ function generateHeartbeatSequence(
             timestamp: ts,
             data: {
                 userActivity: activity,
-                appWindow: appData ? { ...appData } : null // Create copy or set null
+                appWindow: appData ? { ...appData } : undefined // Create copy or set undefined
             }
         });
     }
@@ -133,7 +133,7 @@ function generateMockData(): StoreData {
     const finalData: StoreData = {
         version: 1,
         startTime: allHeartbeats[0]?.timestamp ?? Date.now(), // Use first heartbeat's time
-        lastCleanup: getTime('23:00', date1), // Example cleanup time
+        lastCleanupTime: getTime('23:00', date1), // Example cleanup time
         aggregationInterval: 5 as AggregationIntervalMinutes, // Explicitly cast or ensure type correctness
         days: {
             [date1]: { heartbeats: allHeartbeats }

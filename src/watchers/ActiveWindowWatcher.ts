@@ -1,5 +1,5 @@
 import activeWin, { Result as ActiveWinResult } from 'active-win';
-import { HeartbeatData } from '../store/ActivityStore';
+import { HeartbeatData } from '../activity/core/Types';
 
 interface AppWindowState {
   app: string;
@@ -62,15 +62,19 @@ export default class ActiveWindowWatcher {
   }
 
   /**
-   * Get data for the heartbeat, specifically the active application window.
-   * Conforms to the Watcher interface.
-   * @returns {Promise<Partial<HeartbeatData>>} Object containing appWindow data or empty object.
+   * Retrieves information about the currently active window.
+   * 
+   * @returns {Promise<Partial<HeartbeatData>>} A Promise that resolves to a partial HeartbeatData object with window information
    */
   async getHeartbeatData(): Promise<Partial<HeartbeatData>> {
-    const activeWindow = await this.getActiveWindow();
-    // Return the data in the structure expected by HeartbeatData
-    // If activeWindow is null, this correctly returns { appWindow: null }
-    return { appWindow: activeWindow };
+    const state = await this.getActiveWindow();
+    
+    return {
+      appWindow: state ? {
+        app: state.app,
+        title: state.title
+      } : undefined
+    };
   }
 
   /**

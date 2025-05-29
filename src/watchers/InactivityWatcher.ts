@@ -1,5 +1,5 @@
 import { powerMonitor, BrowserWindow } from 'electron';
-import { HeartbeatData } from '../store/ActivityStore';
+import { HeartbeatData } from '../activity/core/Types';
 
 // Define the possible user activity states
 type UserActivityStatus = 'active' | 'may_be_inactive' | 'inactive';

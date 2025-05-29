@@ -1,4 +1,4 @@
-# Engineering Design Document: Workmory - Automatic time tracking made easy and free
+# Engineering Design Document: Workmory
 
 ## Glossar
 
@@ -458,4 +458,4 @@ Unabhängig vom gewählten Intervall werden Aktivitätsblöcke immer an festen U
 Mit abnehmender Intervallgröße:
 - Steigt die Anzahl der dargestellten Aktivitätsblöcke
 - Erhöht sich die Detailgenauigkeit der Zeitverfolgung
-- Kann die Leistung bei der Aggregation minimal beeinflusst werden
+- Kann die Leistung bei der Aggregation minimal beeinflusst werden 

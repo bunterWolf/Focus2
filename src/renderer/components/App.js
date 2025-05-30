@@ -5,7 +5,7 @@ import DayOverview from './DayOverview';
 import Footer from './Footer';
 import SettingsModal from './SettingsModal';
 import { ipcRenderer } from 'electron';
-import i18n from '../i18n';
+import i18n from '../../i18n';
 import './App.css';
 
 const App = () => {

@@ -1,11 +1,13 @@
 // Remove ts-node/register as this file will be compiled
 // require('ts-node/register');
 
-import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, dialog } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main'; // Use import for @electron/remote/main
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
+import * as fs from 'fs';
+import AutoLaunch from 'auto-launch'; // Auto-Launch-Import
 
 // Read app version from package.json
 import { version as appVersion } from '../../package.json';
@@ -13,6 +15,9 @@ import { version as appVersion } from '../../package.json';
 // Use default imports for our TypeScript modules
 import ActivityStore from '../store/ActivityStore';
 import HeartbeatManager from '../store/HeartbeatManager';
+
+// Auto-Launcher-Instanz
+let autoLauncher: AutoLaunch;
 
 // Initialize @electron/remote
 remoteMain.initialize();
@@ -137,6 +142,33 @@ async function initializeTracking(): Promise<void> { // Add return type Promise<
       await heartbeatManager.init();
       console.log("HeartbeatManager initialized.");
 
+      // Initialisiere AutoLaunch
+      try {
+        autoLauncher = new AutoLaunch({
+          name: 'Chronflow',
+          path: app.getPath('exe'),
+        });
+
+        // Synchronisiere mit den gespeicherten Einstellungen
+        if (activityStore) {
+          const settingsManager = activityStore.getSettingsManager();
+          const shouldAutoLaunch = settingsManager.getAutoLaunchEnabled();
+          
+          const isEnabled = await autoLauncher.isEnabled();
+          
+          // Nur ändern, wenn nötig
+          if (shouldAutoLaunch && !isEnabled) {
+            await autoLauncher.enable();
+            console.log('Auto-Start aktiviert');
+          } else if (!shouldAutoLaunch && isEnabled) {
+            await autoLauncher.disable();
+            console.log('Auto-Start deaktiviert');
+          }
+        }
+      } catch (error) {
+        console.error('Fehler bei der Initialisierung von AutoLaunch:', error);
+      }
+
       // Start tracking (only if not using mock data)
       if (!useMockData && activityStore && heartbeatManager) {
         // Start the watcher for activity data
@@ -215,6 +247,137 @@ function registerIpcHandlers(): void { // Add return type void
     return appVersion;
   });
 
+  // Settings-bezogene Handler
+  
+  // Get current settings
+  ipcMain.handle('get-settings', (): any => {
+    if (!activityStore) {
+      console.error('Cannot get settings: activity store not initialized.');
+      return { error: 'Activity store not initialized' };
+    }
+    
+    const settingsManager = activityStore.getSettingsManager();
+    return {
+      activityStoreDirPath: settingsManager.getActivityStoreDirPath(),
+      allowPrerelease: settingsManager.getAllowPrerelease()
+    };
+  });
+  
+  // Update activity store path
+  ipcMain.handle('update-activity-store-path', async (event: IpcMainInvokeEvent, newPath: string | null): Promise<any> => {
+    if (!activityStore) {
+      console.error('Cannot update activity store path: activity store not initialized.');
+      return { success: false, error: 'Activity store not initialized' };
+    }
+    
+    // Wenn Dateien existieren würde, zeige Bestätigungsdialog
+    if (newPath) {
+      const fullPath = path.join(newPath, 'chronflow-activity-store.json');
+      if (fs.existsSync(fullPath)) {
+        return { 
+          success: false, 
+          fileExists: true,
+          path: fullPath 
+        };
+      }
+    }
+    
+    // Aktualisiere den Pfad
+    const success = activityStore.updateStoragePath(newPath);
+    return { success };
+  });
+  
+  // Confirm using existing activity store file
+  ipcMain.handle('confirm-use-existing-activity-store', async (event: IpcMainInvokeEvent, newPath: string): Promise<any> => {
+    if (!activityStore) {
+      console.error('Cannot update activity store path: activity store not initialized.');
+      return { success: false, error: 'Activity store not initialized' };
+    }
+    
+    // Verwende die existierende Datei
+    const success = activityStore.useExistingStoreFile(newPath);
+    return { success };
+  });
+  
+  // Update beta release setting
+  ipcMain.handle('update-beta-release-setting', async (event: IpcMainInvokeEvent, allowPrerelease: boolean): Promise<any> => {
+    if (!activityStore) {
+      console.error('Cannot update beta release setting: activity store not initialized.');
+      return { success: false, error: 'Activity store not initialized' };
+    }
+    
+    // Aktualisiere die Einstellung
+    const settingsManager = activityStore.getSettingsManager();
+    settingsManager.setAllowPrerelease(allowPrerelease);
+    
+    // Aktualisiere den Auto-Updater
+    autoUpdater.channel = allowPrerelease ? 'beta' : 'latest';
+    
+    // Löse eine neue Update-Prüfung aus
+    autoUpdater.checkForUpdates().catch((err: Error) => {
+      console.error('Error checking for updates:', err);
+    });
+    
+    return { success: true };
+  });
+  
+  // Open directory dialog
+  ipcMain.handle('open-directory-dialog', async (event: IpcMainInvokeEvent): Promise<string | null> => {
+    if (!mainWindow) {
+      console.error('Cannot open directory dialog: main window not initialized.');
+      return null;
+    }
+    
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    });
+    
+    if (result.canceled) {
+      return null;
+    }
+    
+    return result.filePaths[0];
+  });
+
+  // Auto-Launch-Einstellungen abrufen
+  ipcMain.handle('get-auto-launch-settings', async (): Promise<any> => {
+    if (!activityStore) {
+      console.error('Cannot get auto-launch settings: activity store not initialized.');
+      return { enabled: false, error: 'Activity store not initialized' };
+    }
+    
+    const settingsManager = activityStore.getSettingsManager();
+    const enabled = settingsManager.getAutoLaunchEnabled();
+    
+    return { enabled };
+  });
+  
+  // Auto-Launch-Einstellungen aktualisieren
+  ipcMain.handle('update-auto-launch-settings', async (event: IpcMainInvokeEvent, enabled: boolean): Promise<any> => {
+    if (!activityStore || !autoLauncher) {
+      console.error('Cannot update auto-launch settings: components not initialized.');
+      return { success: false, error: 'Components not initialized' };
+    }
+    
+    try {
+      // Einstellung in SettingsManager speichern
+      const settingsManager = activityStore.getSettingsManager();
+      settingsManager.setAutoLaunchEnabled(enabled);
+      
+      // AutoLaunch aktualisieren
+      if (enabled) {
+        await autoLauncher.enable();
+      } else {
+        await autoLauncher.disable();
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Auto-Launch-Einstellungen:', error);
+      return { success: false, error: 'Fehler beim Aktualisieren der Einstellungen' };
+    }
+  });
+
   console.log("IPC handlers registered.");
 }
 
@@ -227,8 +390,8 @@ function initAutoUpdater() {
   autoUpdater.forceDevUpdateConfig = false;
 
   // Beta-Kanal Konfiguration
-  // Lies die Einstellung aus den App-Einstellungen oder Umgebungsvariablen
-  const allowPrerelease = process.env.ALLOW_PRERELEASE === 'true';
+  // Lies die Einstellung aus den Settings statt aus der Umgebungsvariable
+  const allowPrerelease = activityStore?.getSettingsManager().getAllowPrerelease() || false;
   if (allowPrerelease) {
     autoUpdater.channel = 'beta';
     console.log('Beta-Updates aktiviert. Kanal:', autoUpdater.channel);
@@ -354,6 +517,8 @@ app.on('before-quit', async (event) => { // Add event type if needed (Event)
       ipcMain.removeHandler('get-tracking-status');
       ipcMain.removeHandler('toggle-tracking');
       ipcMain.removeHandler('is-using-mock-data');
+      ipcMain.removeHandler('get-auto-launch-settings');
+      ipcMain.removeHandler('update-auto-launch-settings');
 
       console.log('All resources cleaned up before quitting.');
       // Allow quitting now

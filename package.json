@@ -1,6 +1,6 @@
 {
   "name": "workmory",
-  "version": "0.0.1",
+  "version": "0.0.1-beta.0",
   "description": "Productivity Tracker",
   "main": "dist/main/main.js",
   "scripts": {
@@ -115,19 +115,19 @@
           ]
         }
       ],
-      "artifactName": "Workmory-${version}-win-${arch}.${ext}",
-      "nsis": {
-        "oneClick": true,
-        "perMachine": false,
-        "allowToChangeInstallationDirectory": false,
-        "deleteAppDataOnUninstall": false,
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true,
-        "shortcutName": "Workmory",
-        "artifactName": "Workmory-Setup-${version}-win-${arch}.${ext}",
-        "uninstallDisplayName": "Workmory",
-        "differentialPackage": true
-      }
+      "artifactName": "Workmory-${version}-win-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Workmory",
+      "artifactName": "Workmory-Setup-${version}-win-${arch}.${ext}",
+      "uninstallDisplayName": "Workmory",
+      "differentialPackage": true
     },
     "generateUpdatesFilesForAllChannels": true
   },
@@ -159,6 +159,7 @@
     "electron-reload": "^2.0.0-alpha.1",
     "html-webpack-plugin": "^5.6.3",
     "jest": "^29.7.0",
+    "path-browserify": "^1.0.1",
     "standard-version": "^9.5.0",
     "style-loader": "^3.3.3",
     "ts-jest": "^29.3.1",

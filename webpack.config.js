@@ -3,10 +3,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'development',
-  entry: './src/renderer/index.js',
+  entry: {
+    app: './src/renderer/index.js',
+    onboardingRenderer: './src/renderer/onboarding/index.js'
+  },
   target: 'electron-renderer',
   output: {
-    filename: 'bundle.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
     publicPath: './'
   },
@@ -36,7 +39,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/renderer/index.html',
-      filename: 'index.html'
+      filename: 'index.html',
+      chunks: ['app']
+    }),
+    new HtmlWebpackPlugin({
+      template: './public/onboarding.html',
+      filename: 'onboarding.html',
+      chunks: ['onboardingRenderer']
     })
   ],
   resolve: {

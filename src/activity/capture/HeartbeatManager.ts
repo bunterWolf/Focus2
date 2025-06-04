@@ -1,5 +1,6 @@
 // Import necessary classes and types
 import { BrowserWindow } from 'electron';
+import { EventEmitter } from 'events';
 import { ActivityFacade } from '../core/ActivityFacade';
 import { HeartbeatData } from '../core/Types';
 import ActiveWindowWatcher from './watchers/ActiveWindowWatcher';
@@ -22,7 +23,7 @@ interface HeartbeatManagerOptions {
 /**
  * Manages heartbeat generation and orchestrates all watchers.
  */
-class HeartbeatManager {
+class HeartbeatManager extends EventEmitter {
   // ---- CLASS PROPERTY DECLARATIONS ----
   private activityFacade: ActivityFacade;
   private mainWindow: BrowserWindow;
@@ -44,9 +45,12 @@ class HeartbeatManager {
    * @param {HeartbeatManagerOptions} options - Configuration options
    */
   constructor(options: HeartbeatManagerOptions) {
+    super(); // Initialize EventEmitter
+    
     if (!options || !options.activityFacade || !options.mainWindow) {
       throw new Error('HeartbeatManager requires activityFacade and mainWindow in options');
     }
+    
     this.activityFacade = options.activityFacade;
     this.mainWindow = options.mainWindow;
 
@@ -203,6 +207,26 @@ class HeartbeatManager {
   }
 
   /**
+   * Check if required permissions are granted
+   * @returns {boolean} True if all permissions are okay
+   */
+  private async checkPermissions(): Promise<boolean> {
+    if (process.platform !== 'darwin') {
+      return true; // Windows doesn't require special permissions
+    }
+
+    try {
+      // We can't directly check permissions here, 
+      // we'll emit an event that the main process can handle
+      this.emit('permissions-required');
+      return true; // Return true as we can't know immediately
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      return false;
+    }
+  }
+
+  /**
    * Generate a single heartbeat by collecting data and sending it to the ActivityFacade.
    */
   private async generateHeartbeat(): Promise<void> {
@@ -221,7 +245,8 @@ class HeartbeatManager {
       }
 
       console.log('💓 [Heartbeat] Generated:', JSON.stringify(heartbeatData, null, 2));
-      this.activityFacade.addHeartbeat(heartbeatData);
+      await this.activityFacade.addHeartbeat(heartbeatData);
+      this.emit('heartbeat', heartbeatData); // Emit event for subscribers
     } catch (error) {
       console.error('❌ [Heartbeat] Error:', error);
     }
